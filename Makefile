@@ -3,7 +3,12 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := nesemu
+EXTRA_COMPONENT_DIRS := $(POCKETSPRITE_PATH)/8bkc-components/
+IDF_PATH := $(POCKETSPRITE_PATH)/esp-idf
+
+PROJECT_NAME := nofrendo
+
+APPFS_EXTRA_FILES := rom/*
 
 include $(IDF_PATH)/make/project.mk
 
