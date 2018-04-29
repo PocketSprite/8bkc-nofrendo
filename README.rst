@@ -3,11 +3,11 @@ Nofrendo ported to the PocketSprite
 
 This allows you to run NES/Famicom ROMs on the PocketSprite, in glorious squint-o-vision.
 
-*NOTE* THIS IS NOT PRODUCTION-BASED CODE AND NOT AN OFFICIALLY SUPPORTED EMULATOR! It misses the features that
+*NOTE*: THIS IS NOT PRODUCTION-QUALITY CODE AND NOT AN OFFICIALLY SUPPORTED EMULATOR! It misses the features that
 the official PocketSprite ports of Gnuboy and SMSPlus emulators have, and pushes the scaling algorithms
 (in our opinion) past their breaking point. This emulator is released because of public interest in it. While
 the PocketSprite team probably won't develop this code further, we're always open to merge requests adding
-features.
+features. Just remember: if this breaks, you get to keep both pieces.
 
 At the moment, this emulator misses any and all savegame and snapshot support, meaning that every time
 you power down the emulator, you loose all game state. Both snapshots and cartridge SRAM are not supported.
