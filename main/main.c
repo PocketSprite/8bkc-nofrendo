@@ -36,7 +36,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-static int fccallback(int button, char **glob, char **desc, void *usrptr) {
+static int fccallback(int button, void **glob, char **desc, void *usrptr) {
 	if (button & KC_BTN_POWER) {
 		int r=powerbtn_menu_show(kcugui_get_fb());
 		//No need to save state or anything as we're not in a game.
@@ -53,7 +53,7 @@ int app_main(void)
 	nvs_flash_init();
 
 	kcugui_init();
-	int fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL);
+	rom_fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL);
 	kcugui_deinit();
 
 	printf("NoFrendo start!\n");
