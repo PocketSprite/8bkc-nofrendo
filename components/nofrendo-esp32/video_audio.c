@@ -49,6 +49,7 @@
 
 
 esp_timer_handle_t timer;
+int timerfreq;
 uint16_t *oledfb;
 
 
@@ -63,6 +64,7 @@ int osd_installtimer(int frequency, void *func, int funcsize, void *counter, int
 	};
 	esp_timer_create(&args, &timer);
 	esp_timer_start_periodic(timer, 1000000/frequency);
+	timerfreq=frequency;
 	return 0;
 }
 
@@ -266,10 +268,12 @@ void osd_getinput(void) {
 		//reset emu, etc functionality.
 		vTaskDelay(10); //hack: make sure video task is done with framebuffer
 		kchal_sound_mute(1);
+		esp_timer_stop(timer);
 		int r=powerbtn_menu_show(oledfb);
 		if (r==POWERBTN_MENU_EXIT) kchal_exit_to_chooser();
 		if (r==POWERBTN_MENU_POWERDOWN) kchal_power_down();
 		kchal_sound_mute(0);
+		esp_timer_start_periodic(timer, 1000000/timerfreq);
 	}
 	
 	int chg=b^oldb;
