@@ -265,9 +265,11 @@ void osd_getinput(void) {
 		//Show powerbutton menu. Not customized in any sense atm. This should really have select new game,
 		//reset emu, etc functionality.
 		vTaskDelay(10); //hack: make sure video task is done with framebuffer
+		kchal_sound_mute(1);
 		int r=powerbtn_menu_show(oledfb);
 		if (r==POWERBTN_MENU_EXIT) kchal_exit_to_chooser();
 		if (r==POWERBTN_MENU_POWERDOWN) kchal_power_down();
+		kchal_sound_mute(0);
 	}
 	
 	int chg=b^oldb;

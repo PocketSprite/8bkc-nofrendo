@@ -6,3 +6,9 @@
 # in the build directory. This behaviour is entirely configurable,
 # please read the ESP-IDF documents if you need to do this.
 #
+
+COMPILEDATE:=\"$(shell date "+%d %b %Y")\"
+GITREV:=\"$(shell git rev-parse HEAD | cut -b 1-10)\"
+
+CFLAGS += -DCOMPILEDATE="$(COMPILEDATE)" -DGITREV="$(GITREV)"
+

@@ -36,6 +36,27 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
+static void debug_screen() {
+	kcugui_cls();
+	UG_FontSelect(&FONT_6X8);
+	UG_SetForecolor(C_WHITE);
+	UG_PutString(0, 0, "INFO");
+	UG_SetForecolor(C_YELLOW);
+	UG_PutString(0, 16, "Nofrendo");
+	UG_PutString(0, 24, "Gitrev");
+	UG_SetForecolor(C_WHITE);
+	UG_PutString(0, 32, GITREV);
+	UG_SetForecolor(C_YELLOW);
+	UG_PutString(0, 40, "Compiled");
+	UG_SetForecolor(C_WHITE);
+	UG_PutString(0, 48, COMPILEDATE);
+	kcugui_flush();
+
+	while (kchal_get_keys()&KC_BTN_SELECT) vTaskDelay(100/portTICK_RATE_MS);
+	while (!(kchal_get_keys()&KC_BTN_SELECT)) vTaskDelay(100/portTICK_RATE_MS);
+}
+
+
 static int fccallback(int button, void **glob, char **desc, void *usrptr) {
 	if (button & KC_BTN_POWER) {
 		int r=powerbtn_menu_show(kcugui_get_fb());
@@ -43,6 +64,7 @@ static int fccallback(int button, void **glob, char **desc, void *usrptr) {
 		if (r==POWERBTN_MENU_EXIT) kchal_exit_to_chooser();
 		if (r==POWERBTN_MENU_POWERDOWN) kchal_power_down();
 	}
+	if (button & KC_BTN_SELECT) debug_screen();
 	return 0;
 }
 
