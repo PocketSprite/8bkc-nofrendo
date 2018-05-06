@@ -53,7 +53,7 @@ int app_main(void)
 	nvs_flash_init();
 
 	kcugui_init();
-	int fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL);
+	int fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL, 0);
 	kcugui_deinit();
 
 	printf("NoFrendo start!\n");
