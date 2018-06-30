@@ -166,7 +166,6 @@ static int internal_insert(const char *filename, system_t type)
          log_printf("Failed to create NES instance.\n");
          return -1;
       }
-
       if (nes_insertcart(console.filename, console.machine.nes))
          return -1;
 

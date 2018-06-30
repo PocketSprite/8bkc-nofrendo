@@ -42,11 +42,16 @@ extern char *_my_strdup(const char *string, char *file, int line);
 
 #else /* !NORFRENDO_DEBUG */
 
+#if 0
 /* Non-debugging versions of calls */
 #define  malloc(s)   _my_malloc((s))
 #define  free(d)     _my_free((void **) &(d))
 #define  strdup(s)   _my_strdup((s))
-
+#else
+//Just include libc versions
+#include <stdlib.h>
+#include <string.h>
+#endif
 extern void *_my_malloc(int size);
 extern void _my_free(void **data);
 extern char *_my_strdup(const char *string);

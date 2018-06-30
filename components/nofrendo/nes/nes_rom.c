@@ -37,7 +37,8 @@
 #include <log.h>
 #include <osd.h>
 
-extern char *osd_getromdata();
+extern char *osd_getromdata(const char *name);
+extern void osd_unloadromdata();
 
 /* Max length for displayed filename */
 #define  ROM_DISP_MAXLEN   20
@@ -85,6 +86,7 @@ typedef struct inesheader_s
 /* Save battery-backed RAM */
 static void rom_savesram(rominfo_t *rominfo)
 {
+#if 0
    FILE *fp;
    char fn[PATH_MAX + 1];
 
@@ -103,11 +105,13 @@ static void rom_savesram(rominfo_t *rominfo)
          log_printf("Wrote battery RAM to %s.\n", fn);
       }
    }
+#endif
 }
 
 /* Load battery-backed RAM from disk */
 static void rom_loadsram(rominfo_t *rominfo)
 {
+#if 0
    FILE *fp;
    char fn[PATH_MAX + 1];
 
@@ -126,6 +130,7 @@ static void rom_loadsram(rominfo_t *rominfo)
          log_printf("Read battery RAM from %s.\n", fn);
       }
    }
+#endif
 }
 
 /* Allocate space for SRAM */
@@ -435,20 +440,23 @@ char *rom_getinfo(rominfo_t *rominfo)
    return info;
 }
 
+
+
 /* Load a ROM image into memory */
 rominfo_t *rom_load(const char *filename)
 {
-   unsigned char *rom=(unsigned char*)osd_getromdata();
+   unsigned char *rom=(unsigned char*)osd_getromdata(filename);
    rominfo_t *rominfo;
 
    rominfo = malloc(sizeof(rominfo_t));
    if (NULL == rominfo)
       return NULL;
-
    memset(rominfo, 0, sizeof(rominfo_t));
 
+   strcpy(rominfo->filename, filename);
+
    /* Get the header and stick it into rominfo struct */
-	if (rom_getheader(&rom, rominfo))
+   if (rom_getheader(&rom, rominfo))
       goto _fail;
 
    /* Make sure we really support the mapper */
@@ -505,12 +513,15 @@ void rom_free(rominfo_t **rominfo)
 
    if ((*rominfo)->sram)
       free((*rominfo)->sram);
+/*
    if ((*rominfo)->rom)
       free((*rominfo)->rom);
    if ((*rominfo)->vrom)
       free((*rominfo)->vrom);
+*/
    if ((*rominfo)->vram)
       free((*rominfo)->vram);
+   osd_unloadromdata();
 
    free(*rominfo);
 

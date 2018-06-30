@@ -40,6 +40,7 @@
 #include <8bkc-hal.h>
 #include "powerbtn_menu.h"
 #include "esp_timer.h"
+#include "menu.h"
 
 #define  DEFAULT_SAMPLERATE   22050
 #define  DEFAULT_FRAGSIZE     128
@@ -48,14 +49,17 @@
 #define  DEFAULT_HEIGHT       NES_VISIBLE_HEIGHT
 
 
-esp_timer_handle_t timer;
+esp_timer_handle_t timer=NULL;
 int timerfreq;
 uint16_t *oledfb;
-
 
 //Seemingly, this will be called only once. Should call func with a freq of frequency,
 int osd_installtimer(int frequency, void *func, int funcsize, void *counter, int countersize)
 {
+	if (timer) {
+		esp_timer_stop(timer);
+		esp_timer_delete(timer);
+	}
 	printf("Timer install, freq=%d\n", frequency);
 	esp_timer_create_args_t args={
 		.callback=func,
@@ -256,6 +260,18 @@ static void videoTask(void *arg) {
 static void osd_initinput() {
 }
 
+static int quit_reason=EMU_RUN_CONT;
+
+int osd_quitreason() {
+	return quit_reason;
+}
+
+static int do_loadstate=0;
+
+void osd_queue_loadstate() {
+	do_loadstate=5;
+}
+
 void osd_getinput(void) {
 	const int ev[8]={
 		event_joypad1_right, event_joypad1_left, event_joypad1_up, event_joypad1_down, 
@@ -263,23 +279,44 @@ void osd_getinput(void) {
 	};
 	static int oldb=0;
 	int b=kchal_get_keys();
+	event_t evh;
+	
+	//do_loadstate is set to a certain number on bootup, because for some reason loading the state
+	//doesn't work directly after boot-up. This causes it to wait for a few frames.
+	if (do_loadstate>0) do_loadstate--;
+	if (do_loadstate==1) {
+		evh=event_get(event_state_slot_0);
+		if (evh) evh(INP_STATE_MAKE);
+		evh=event_get(event_state_load);
+		if (evh) evh(INP_STATE_MAKE);
+	}
+
 	if (b & KC_BTN_POWER) {
-		//Show powerbutton menu. Not customized in any sense atm. This should really have select new game,
-		//reset emu, etc functionality.
+		//Show powerbutton menu. 
 		vTaskDelay(10); //hack: make sure video task is done with framebuffer
 		kchal_sound_mute(1);
-		esp_timer_stop(timer);
-		int r=powerbtn_menu_show(oledfb);
-		if (r==POWERBTN_MENU_EXIT) kchal_exit_to_chooser();
-		if (r==POWERBTN_MENU_POWERDOWN) kchal_power_down();
-		kchal_sound_mute(0);
-		esp_timer_start_periodic(timer, 1000000/timerfreq);
+		if (timer) esp_timer_stop(timer);
+		int r=nofrendoShowMenu(oledfb);
+		quit_reason=r;
+		if (r==EMU_RUN_RESET) {
+			evh=event_get(event_hard_reset);
+			if (evh) evh(INP_STATE_MAKE);
+		} else if (r==EMU_RUN_NEWROM || r==EMU_RUN_POWERDOWN || r==EMU_RUN_EXIT) {
+			evh=event_get(event_state_slot_0);
+			if (evh) evh(INP_STATE_MAKE);
+			evh=event_get(event_state_save);
+ 			if (evh) evh(INP_STATE_MAKE);
+			evh=event_get(event_quit);
+			if (evh) evh(INP_STATE_MAKE);
+		} else {
+			kchal_sound_mute(0);
+		}
+		if (timer) esp_timer_start_periodic(timer, 1000000/timerfreq);
 	}
 	
 	int chg=b^oldb;
 	int x;
 	oldb=b;
-	event_t evh;
 	for (x=0; x<8; x++) {
 		if (chg&1) {
 			evh=event_get(ev[x]);

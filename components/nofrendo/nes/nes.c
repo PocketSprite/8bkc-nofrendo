@@ -370,6 +370,7 @@ void nes_emulate(void)
    nes.scanline_cycles = 0;
    nes.fiq_cycles = (int) NES_FIQ_PERIOD;
 
+
    while (false == nes.poweroff)
    {
       if (nofrendo_ticks != last_ticks)
@@ -400,9 +401,9 @@ void nes_emulate(void)
          nes_renderframe(true);
          system_video(true);
       } else {
-			//PocketSprite: hack
-			vTaskDelay(2);
-		}
+         //PocketSprite: hack; delay for fps control
+         vTaskDelay(2);
+      }
    }
 }
 

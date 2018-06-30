@@ -30,12 +30,14 @@
 
 char configfilename[]="na";
 
+
 /* This is os-specific part of main() */
 int osd_main(int argc, char *argv[])
 {
    config.filename = configfilename;
 
-   return main_loop("rom", system_autodetect);
+   printf("Running main loop for %s\n", argv[1]);
+   return main_loop(argv[1], system_autodetect);
 }
 
 /* File system interface */
@@ -47,7 +49,13 @@ void osd_fullname(char *fullname, const char *shortname)
 /* This gives filenames for storage of saves */
 char *osd_newextension(char *string, char *ext)
 {
-   return string;
+    int l=strlen(string);
+    while(l && string[l]!='.') {
+        l--;
+    }
+    if (l) string[l]=0;
+    strcat(string, ext);
+    return string;
 }
 
 /* This gives filenames for storage of PCX snapshots */

@@ -13,15 +13,16 @@
 #include "8bkc-ugui.h"
 #include "ugui.h"
 #include "8bkcgui-widgets.h"
+#include "menu.h"
+#include <string.h>
 
+spi_flash_mmap_handle_t hrom=NULL;
 
-//as selected in main menu
-int rom_fd;
-
-char *osd_getromdata() {
+char *osd_getromdata(const char *name) {
 	int sz;
 	char *romdata;
-	spi_flash_mmap_handle_t hrom=NULL;
+	if (!appfsExists(name)) return NULL;
+	int rom_fd=appfsOpen(name);
 	appfsEntryInfo(rom_fd, NULL, &sz);
 	esp_err_t err=appfsMmap(rom_fd, 0, sz, (const void**)&romdata, SPI_FLASH_MMAP_DATA, &hrom);
 	if (err!=ESP_OK) {
@@ -30,10 +31,10 @@ char *osd_getromdata() {
 	return (char*)romdata;
 }
 
-
-esp_err_t event_handler(void *ctx, system_event_t *event)
-{
-    return ESP_OK;
+void osd_unloadromdata() {
+	if (!hrom) return;
+	appfsMunmap(hrom);
+	hrom=NULL;
 }
 
 static void debug_screen() {
@@ -68,20 +69,55 @@ static int fccallback(int button, void **glob, char **desc, void *usrptr) {
 	return 0;
 }
 
+void monTask() {
+	while(1) {
+		vTaskDelay(1000/portTICK_PERIOD_MS);
+		printf("Free mem: dram %d\n", xPortGetFreeHeapSize());
+	}
+}
 
-int app_main(void)
-{
+extern int osd_quitreason();
+extern void osd_queue_loadstate();
+
+int app_main(void) {
+	char rom[128]="";
 	kchal_init();
-	nvs_flash_init();
+	nvs_handle nvsh=kchal_get_app_nvsh();;
 
-	kcugui_init();
-	rom_fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL);
-	kcugui_deinit();
+	xTaskCreatePinnedToCore(&monTask, "monTask", 1024*2, NULL, 7, NULL, 0);
 
-	printf("NoFrendo start!\n");
-	nofrendo_main(0, NULL);
-	printf("NoFrendo died? WtF?\n");
-	kchal_exit_to_chooser();
+	unsigned int size=sizeof(rom);
+	nvs_get_str(nvsh, "rom", rom, &size);
+
+	while(1) {
+		int rom_fd=-1;
+		//Either continue from old rom or ask for new one
+		if (strlen(rom)!=0 && appfsExists(rom)) {
+			rom_fd=appfsOpen(rom);
+		} else {
+			kcugui_init();
+			rom_fd=kcugui_filechooser("*.nes,*.bin", "Select ROM", fccallback, NULL, 0);
+			kcugui_deinit();
+		}
+
+		nvs_set_str(nvsh, "rom", "");
+
+		//Create commandline args
+		const char *args[3];
+		args[0]="nofrendo";
+		appfsEntryInfo(rom_fd, &args[1], NULL);
+		args[2]=NULL;
+		osd_queue_loadstate();
+		nofrendo_main(2, args);
+
+		int r=osd_quitreason();
+		if (r==EMU_RUN_POWERDOWN || r==EMU_RUN_EXIT) {
+			//Make sure we continue with this ROM the next time.
+			nvs_set_str(nvsh, "rom", args[1]);
+		}
+		if (r==EMU_RUN_POWERDOWN) kchal_power_down();
+		if (r==EMU_RUN_EXIT) kchal_exit_to_chooser();
+	}
 	return 0;
 }
 
