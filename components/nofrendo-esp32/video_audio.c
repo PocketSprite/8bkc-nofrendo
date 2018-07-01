@@ -279,9 +279,9 @@ void osd_getinput(void) {
 
 	if (b & KC_BTN_POWER) {
 		//Show powerbutton menu. 
-		vTaskDelay(10); //hack: make sure video task is done with framebuffer
 		kchal_sound_mute(1);
 		if (timer) esp_timer_stop(timer);
+		vTaskDelay(20); //hack: make sure video task is done with framebuffer
 		int r=nofrendoShowMenu(oledfb);
 		while(kchal_get_keys()&KC_BTN_POWER) vTaskDelay(10); //wait till powerbutton is released
 		quit_reason=r;

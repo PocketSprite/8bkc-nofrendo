@@ -86,12 +86,12 @@ int app_main(void) {
 
 	xTaskCreatePinnedToCore(&monTask, "monTask", 1024*2, NULL, 7, NULL, 0);
 
-	unsigned int size=sizeof(rom);
-	nvs_get_str(nvsh, "rom", rom, &size);
 
 	while(1) {
 		int rom_fd=-1;
 		//Either continue from old rom or ask for new one
+		unsigned int size=sizeof(rom);
+		nvs_get_str(nvsh, "rom", rom, &size);
 		if (strlen(rom)!=0 && appfsExists(rom)) {
 			rom_fd=appfsOpen(rom);
 		} else {
