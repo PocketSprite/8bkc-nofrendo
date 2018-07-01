@@ -131,29 +131,35 @@ int nofrendoShowMenu(uint16_t *overlay) {
 		if ((io&KC_BTN_A) || (io&KC_BTN_B)) {
 			if (menuItem==SCN_PWRDWN) {
 				nofrendoShowSnapshotting(overlay, oldfb);
+				free(oldfb);
 				return EMU_RUN_POWERDOWN;
 			}
 			if (menuItem==SCN_CHROM) {
 				nofrendoShowSnapshotting(overlay, oldfb);
+				free(oldfb);
 				return EMU_RUN_NEWROM;
 			}
 			if (menuItem==SCN_RESET) {
 				kchal_sound_mute(0);
+				free(oldfb);
 				return EMU_RUN_RESET;
 			}
 			if (menuItem==SCN_EXIT) {
 				nofrendoShowSnapshotting(overlay, oldfb);
+				free(oldfb);
 				return EMU_RUN_EXIT;
 			}
 		}
 		if (io&KC_BTN_POWER_LONG) {
 			nofrendoShowSnapshotting(overlay, oldfb);
+			free(oldfb);
 			return EMU_RUN_POWERDOWN;
 		}
 
 		if (!(io&KC_BTN_POWER)) powerReleased=1;
 		if (io&KC_BTN_START || (powerReleased && (io&KC_BTN_POWER))) {
 			kchal_sound_mute(0);
+			free(oldfb);
 			return EMU_RUN_CONT;
 		}
 

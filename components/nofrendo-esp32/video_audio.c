@@ -95,20 +95,10 @@ void osd_setsound(void (*playfunc)(void *buffer, int length)) {
 	audio_callback = playfunc;
 }
 
-static void osd_stopsound(void) {
-	audio_callback = NULL;
-}
 
 
-static int osd_init_sound(void) {
-	kchal_sound_start(DEFAULT_SAMPLERATE, 1024);
-	audio_frame=malloc(4*DEFAULT_FRAGSIZE);
-	audio_callback = NULL;
-	return 0;
-}
 
-void osd_getsoundinfo(sndinfo_t *info)
-{
+void osd_getsoundinfo(sndinfo_t *info) {
 	info->sample_rate = DEFAULT_SAMPLERATE;
 	info->bps = 8;
 }
@@ -184,7 +174,6 @@ static void set_palette(rgb_t *pal) {
 
 /* clear all frames to a particular color */
 static void clear(uint8 color) {
-//   SDL_FillRect(mySurface, 0, color);
 }
 
 /* acquire the directbuffer for writing */
@@ -257,9 +246,6 @@ static void videoTask(void *arg) {
 ** Input
 */
 
-static void osd_initinput() {
-}
-
 static int quit_reason=EMU_RUN_CONT;
 
 int osd_quitreason() {
@@ -297,6 +283,7 @@ void osd_getinput(void) {
 		kchal_sound_mute(1);
 		if (timer) esp_timer_stop(timer);
 		int r=nofrendoShowMenu(oledfb);
+		while(kchal_get_keys()&KC_BTN_POWER) vTaskDelay(10); //wait till powerbutton is released
 		quit_reason=r;
 		if (r==EMU_RUN_RESET) {
 			evh=event_get(event_hard_reset);
@@ -327,16 +314,12 @@ void osd_getinput(void) {
 	}
 }
 
-static void osd_freeinput(void) {
-}
-
 void osd_getmouse(int *x, int *y, int *button) {
 }
 
 /* this is at the bottom, to eliminate warnings */
 void osd_shutdown() {
-	osd_stopsound();
-	osd_freeinput();
+	audio_callback = NULL;
 }
 
 static int logprint(const char *string) {
@@ -347,15 +330,26 @@ static int logprint(const char *string) {
 ** Startup
 */
 
+//We actually should shut down video in osd_shutdown, but that's a PITA... we use this to just init it once.
+static int osd_inited=0;
+
 int osd_init()
 {
-	log_chain_logfunc(logprint);
+	audio_callback = NULL;
 
-	if (osd_init_sound())
-		return -1;
+	if (osd_inited) {
+		//Make sound is not muted and return
+		kchal_sound_mute(0);
+		return 0;
+	}
+	osd_inited=1;
+
+	kchal_sound_start(DEFAULT_SAMPLERATE, 1024);
+	audio_frame=malloc(4*DEFAULT_FRAGSIZE);
+
+	log_chain_logfunc(logprint);
 
 	vidQueue=xQueueCreate(1, sizeof(bitmap_t *));
 	xTaskCreatePinnedToCore(&videoTask, "videoTask", 2048, NULL, 5, NULL, 1);
-	osd_initinput();
 	return 0;
 }
