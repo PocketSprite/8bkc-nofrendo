@@ -71,6 +71,9 @@ extern rominfo_t *mmc_getinfo(void);
 extern void mmc_bankvrom(int size, uint32 address, int bank);
 extern void mmc_bankrom(int size, uint32 address, int bank);
 
+extern void mmc_bankvram(int size, uint32 address, int bank);
+extern void mmc_bankram(int size, uint32 address, int bank);
+
 /* Prototypes */
 extern mmc_t *mmc_create(rominfo_t *rominfo);
 extern void mmc_destroy(mmc_t **nes_mmc);
